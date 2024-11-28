@@ -316,9 +316,9 @@ void main() {
     }
     printf("<help> to get help!\n>");
     //init_pit();  // PIT 초기화
-    init_pic();  // PIC 초기화
+    //init_pic();  // PIC 초기화
     init_idt();  // IDT 초기화
-    //__asm__ __volatile__("int 0x21"); //인터럽트 테스트를 위해 실행
+    __asm__ __volatile__("int 0x21"); //인터럽트 테스트를 위해 실행
     int time = 10000;
     while(1) {
         /*
