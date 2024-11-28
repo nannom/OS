@@ -8,13 +8,11 @@ extern "C" void _start() { //main을 호출
 
 void Write_port_byte(unsigned short port, unsigned char data) {
     __asm__ __volatile__ (
-        "cli;"
         "pusha;"
         "mov dx, %0;"
         "mov al, %1;"
         "out dx, al;"
         "popa;"
-        "sti;"
         :
         : "r" (port), "r" (data)
         : "dx", "al"
@@ -178,10 +176,10 @@ void idt_ignore() {
         "mov dx, 0x20;"
         "mov al, 0x20;"
         "out dx, al;"
-        "mov dx, 0xA0;"
-        "out dx, al;"
         "popa;"
         "sti;"
+		"leave;"
+		"nop;"
         "iretd;"
     );
 }
@@ -198,6 +196,8 @@ void idt_timer() {
         "out dx, al;"
         "popa;"
         "sti;"
+		"leave;"
+		"nop;"
         "iretd;"
     );
 }
@@ -207,7 +207,7 @@ void idt_keyboard() {
         "cli;"                // 인터럽트 비활성화
         "pusha;"              // 모든 레지스터 저장
     );
-    printf("test");
+    //printf("test");
 
     unsigned char keybuf = Read_port_byte(0x60);
     printf("%c", scan_code_table[keybuf]);
@@ -217,6 +217,8 @@ void idt_keyboard() {
         "out dx, al;"
         "popa;"                   // 모든 레지스터 복원
         "sti;"                    // 인터럽트 활성화
+		"leave;"
+		"nop;"
         "iretd;"                  // 인터럽트 처리 종료, 이전 상태로 복귀
     );
 }
@@ -315,10 +317,10 @@ void main() {
         *v = 0;
     }
     printf("<help> to get help!\n>");
-    //init_pit();  // PIT 초기화
-    //init_pic();  // PIC 초기화
+    init_pit();  // PIT 초기화
+    init_pic();  // PIC 초기화
     init_idt();  // IDT 초기화
-    __asm__ __volatile__("int 0x21"); //인터럽트 테스트를 위해 실행
+    //__asm__ __volatile__("int 0x21"); //인터럽트 테스트를 위해 실행
     int time = 10000;
     while(1) {
         /*
@@ -330,6 +332,10 @@ void main() {
             }
         }
         */
+       char* d = (char*)video;
+       video = (char*)(0xb8000);
+       printf("%d           ",_timer);
+       video = d;
         for(i = 0;i<128 && 0;i++) { //콘솔 관련(미사용중)
             if(kbd_state[i] == 1) {
                 if(scan_code_table[i] == '\n') {
