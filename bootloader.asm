@@ -66,13 +66,6 @@ gdt_start:
 		db 0x92
 		db 0xcf
 		db 0
-	gdt_video:
-		dw 0xffff
-		dw 0
-		db 0x0b
-		db 0x92
-		db 0x40
-		db 0
 gdt_end:
 
 gdt_descriptor:
