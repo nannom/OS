@@ -1,76 +1,64 @@
-[org 0x7c00]
+[org 0]
 [bits 16]
 
-jmp short start
+jmp 0x07c0:_start
 
-start:
-	xor ax,ax
-	mov ds, ax
-	mov es, ax
-	mov ss, ax
-	mov sp, 0x7000
+_start:
+    mov ah, 0x0e
+    mov al, 'B'
+    int 0x10
 
-    mov ax, 0x1000
+	mov ax, 0x1000
 	mov es, ax
 	mov bx, 0x0000
 
 	mov ah, 0x02
-	mov al, 41
+	mov al, 2
 	mov ch, 0
 	mov dh, 0
 	mov cl, 2
 	mov dl, 0x80
 	int 0x13
-	
-	mov ax, 0x2401
-	int 0x15
-	cli
-	lgdt[gdt_descriptor]
+	jc error
+
+	lgdt[gdtr]
 	mov eax, cr0
 	or eax, 1
 	mov cr0, eax
-
+	
 	jmp $+2
 	nop
 	nop
 
-	jmp 0x08:protected_mode
+	mov bx, DataSegment
+	mov ds, bx
+	mov es, bx
+	mov fs, bx
+	mov gs, bx
+	mov ss, bx
+	jmp dword CodeSegment:0x10000
 
-[bits 32]
-protected_mode:
-	mov ax, 0x10
+error:
+    mov ah, 0x0e
+    mov al, 'E'
+    int 0x10
+    jmp $
 
-	mov ds,ax
-	mov es,ax
-	mov fs,ax
-	mov gs,ax
-	mov ss,ax
+gdtr:
+dw gdt_end - gdt - 1
+dd gdt
 
-	jmp 0x08:0x10000
+gdt:
+	dd 0
+	dd 0
+	CodeSegment equ 0x08
+	dd 0x0000FFFF, 0x00CF9A00 ; 코드 세그
+	DataSegment equ 0x10
+	dd 0x0000FFFF, 0x00CF9200 ; 데이터 세그
+	VideoSegment equ 0x18
+	dd 0x8000FFFF, 0x0040920B ; 비디오 세그
 
-gdt_start:
-	gdt_null:
-		dd 0
-		dd 0
-	gdt_code:
-		dw 0xFFFF
-		dw 0
-		db 0
-		db 0x9a
-		db 0xcf
-		db 0
-	gdt_data:
-		dw 0xffff
-		dw 0
-		db 0
-		db 0x92
-		db 0xcf
-		db 0
 gdt_end:
-
-gdt_descriptor:
-	dw gdt_end - gdt_start - 1
-	dd gdt_start
 
 times 510-($-$$) db 0
 dw 0xAA55
